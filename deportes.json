@@ -1,0 +1,26 @@
+[
+  {
+    "nombre": "Ajedrez",
+    "precio": 100500
+  },
+  {
+    "nombre": "Atletismo",
+    "precio": 125000
+  },
+  {
+    "nombre": "Badminton",
+    "precio": 130000
+  },
+  {
+    "nombre": "Basquetbol",
+    "precio": 180000
+  },
+  {
+    "nombre": "Beisbol",
+    "precio": 190000
+  },
+  {
+    "nombre": "Box",
+    "precio": 136000
+  }
+]

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Deportes</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-image: url('images/herramientas-deportivas_53876-138077.avif'); /* Reemplaza 'ruta/a/tu/imagen.jpg' con la ruta de tu imagen */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: blue; /* Esto cambia el color del texto a blanco para mayor legibilidad */
+        }
+        .container {
+            margin-top: 20px;
+            background-color: rgb(58, 162, 162);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        .modal-content {
+            background-color: #fff;
+        }
+        .table thead th {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center">Gestión de Deportes</h1>
+    <div class="card">
+        <div class="card-body">
+            <h4>Agregar Nuevo Deporte</h4>
+            <form>
+                <div class="form-group">
+                    <label for="nombre">Nombre del deporte:</label>
+                    <input type="text" class="form-control" id="nombre">
+                </div>
+                <div class="form-group">
+                    <label for="precio">Precio:</label>
+                    <input type="text" class="form-control" id="precio">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="agregar()">Agregar</button>
+            </form>
+        </div>
+    </div>
+    <h3 class="text-center">Lista de Deportes</h3>
+    <table class="table table-bordered">
+        <thead class="thead-light">
+            <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpo"></tbody>
+    </table>
+</div>
+
+<!-- Modal para editar deportes -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Editar Deporte</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label for="nombreModal">Nombre del deporte:</label>
+                        <input type="text" class="form-control" id="nombreModal" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="precioModal">Precio:</label>
+                        <input type="text" class="form-control" id="precioModal">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="editar()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.20.0/axios.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Cargar inicialmente los deportes existentes
+        getData();
+
+        // Función para obtener y mostrar los deportes
+        function getData() {
+            $('#cuerpo').html('');  // Limpia la tabla para evitar duplicados
+            axios.get('/deportes').then((response) => {
+                const deportes = response.data.deportes;
+                deportes.forEach((d, i) => {
+                    $('#cuerpo').append(`
+                        <tr>
+                            <th scope="row">${i + 1}</th>
+                            <td>${d.nombre}</td>
+                            <td>${d.precio}</td>
+                            <td>
+                                <button class="btn btn-warning" onclick="preEdit('${d.nombre}', '${d.precio}')" data-toggle="modal" data-target="#exampleModal">Editar</button>
+                                <button class="btn btn-danger" onclick="eliminar('${d.nombre}')">Eliminar</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            }).catch((error) => {
+                console.error('Error al recuperar los deportes:', error);
+                alert('Error al cargar los deportes');
+            });
+        }
+
+        // Función para agregar un nuevo deporte
+        window.agregar = function() {
+            const nombre = $('#nombre').val();
+            const precio = parseFloat($('#precio').val());
+            if (!nombre || isNaN(precio)) {
+                alert('Por favor, ingresa un nombre y un precio válidos.');
+                return;
+            }
+            axios.post('/agregar', {
+                nombre: nombre,
+                precio: precio
+            }).then((response) => {
+                alert(response.data);
+                getData();  // Recarga la lista de deportes para mostrar el nuevo deporte
+            }).catch((error) => {
+                console.error('Error al agregar deporte:', error);
+                alert('Error al agregar deporte');
+            });
+        }
+
+        // Función para preparar y mostrar el modal de edición
+        window.preEdit = function(nombre, precio) {
+            $('#nombreModal').val(nombre);
+            $('#precioModal').val(precio);
+            $('#exampleModal').modal('show');
+        }
+
+        // Función para editar un deporte existente
+        window.editar = function() {
+            const nombre = $('#nombreModal').val();
+            const precio = parseFloat($('#precioModal').val());
+            if (isNaN(precio)) {
+                alert('Por favor, ingresa un precio válido.');
+                return;
+            }
+            axios.put('/editar', {
+                nombre: nombre,
+                precio: precio
+            }).then((response) => {
+                alert(response.data);
+                $('#exampleModal').modal('hide');
+                getData();  // Recarga la lista para reflejar los cambios
+            }).catch((error) => {
+                console.error('Error al editar deporte:', error);
+                alert('Error al editar deporte');
+            });
+        }
+
+        // Función para eliminar un deporte
+        window.eliminar = function(nombre) {
+            axios.delete(`/eliminar/${encodeURIComponent(nombre)}`)
+            .then(response => {
+                alert('Deporte eliminado correctamente');
+                getData();
+            })
+            .catch(error => {
+                console.error('Error al eliminar deporte:', error);
+                alert('Error al eliminar deporte: ' + error.response.data);
+            });
+        }
+    });
+</script>
+</body>
+</html>
